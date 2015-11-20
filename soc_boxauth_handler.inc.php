@@ -2,7 +2,7 @@
 
 
 
-define('SOC_BOXAUTH_EXPIREOFFSET', 3000);   // arbitrary number of seconds before token needs to be redone
+
 
 
 /**
@@ -14,7 +14,7 @@ function _soc_boxauth_get_code_from_box_handler() {
   // get query string parameters
   $qs = drupal_get_query_parameters();
 
-  watchdog(__FILE__, "Got code back from Box", $qs, WATCHDOG_INFO);
+  watchdog(SOC_BOXAUTH_MODULENAME, "Got code back from Box", $qs, WATCHDOG_INFO);
 
 
   // Stage post data and create http query
@@ -48,14 +48,14 @@ function _soc_boxauth_get_code_from_box_handler() {
   // to user.
   if( isset($_SESSION['box']['access_token'])) {
     drupal_set_message(t(variable_get(SOC_BOXAUTH_SUCCESSMESSAGE_VARIABLE)));
-    watchdog(__FUNCTION__, 'Successful box access_token');
+    watchdog(SOC_BOXAUTH_MODULENAME, 'Successful box access_token');
   }
 
   // Else, if that array index doesn't exists, something may not have processed
   // correctly.
   else {
     drupal_set_message(t(variable_get(SOC_BOXAUTH_FAILUREMESSAGE_VARIABLE)), 'error');
-    watchdog(__FUNCTION__, 'Failed box access_token');
+    watchdog(SOC_BOXAUTH_MODULENAME, 'Failed box access_token');
   }
 
   return l('FOr testing, go back to auth page.', 'do/box/auth');

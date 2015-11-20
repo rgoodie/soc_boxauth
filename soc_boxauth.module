@@ -5,8 +5,12 @@
  * TODO: Enter file description here.
  */
 
+
+// Module name used in watchdog
 define('SOC_BOXAUTH_MODULENAME', 'SOC BoxAuth');
 define('SOC_BOXAUTH_MODDESC', 'Record necessary information points such as client_id and client_secret');
+
+define('SOC_BOXAUTH_EXPIREOFFSET', 3000);   // arbitrary number of seconds before token needs to be redone
 
 
 define('SOC_BOXAUTH_REDIRECTURI_VARIABLE', 'soc_boxauth_redirecturi');
@@ -77,7 +81,7 @@ function soc_boxauth_page_alter(&$page) {
 
   // If we have an access token, see how much time is left on it. If it's soon
   // to expire, then we should just send renew.
-  if (isset($_SESSION['box']['access_token'])) {
+  if (isset ($_SESSION['box']) && isset($_SESSION['box']['access_token'])) {
     $_SESSION['box']['countdown'] = $_SESSION['box']['expires_time'] - time();
 
     // Do we need to renew the token? This is defined by the count down being
@@ -98,19 +102,15 @@ function soc_boxauth_page_alter(&$page) {
         watchdog(SOC_BOXAUTH_MODULENAME, "Unsetting session['box']", $_SESSION['box']);
         unset($_SESSION['box']);
       }
-
-
-
-
     }
 
   }
 
   // If debug mode, show some interesting stuff
-  if (variable_get(SOC_BOXAUTH_DEBUGSTATE_VARIABLE, FALSE) == TRUE) {
+  if (variable_get(SOC_BOXAUTH_DEBUGSTATE_VARIABLE, FALSE) == TRUE && isset($_SESSION['box']['countdown'] )) {
    // dpm($_SESSION['box']);
     drupal_set_message(t("Box access token dies in @min minutes", [
-      '@min' => sprintf("%.0f", $_SESSION['box']['countdown'] / 60),
+      '@min' => sprintf("%.0f", $_SESSION['box']['countdown'] / 60) | 0,
     ]));
 
   }
