@@ -7,13 +7,7 @@
 
 define('SOC_BOXAUTH_MODDESC', 'Record necessary information points such as client_id and client_secret');
 
-define('SOC_BOXAUTH_REDIRECTURI_VARIABLE', 'soc_boxauth_redirecturi');
-define('SOC_BOXAUTH_CLIENTSECRET_VARIABLE', 'soc_boxauth_clientsecret');
-define('SOC_BOXAUTH_CLIENTID_VARIABLE', 'soc_boxauth_clientid');
 
-define("SOC_BOX_CLIENTID", "ahoeb8l5nwfl5653v5nnoxrmt2ok8q9b");
-define("SOC_BOX_CLIENTSECRET", "jRY9rpQc0nq8rIsiiZ3RVpnWa590can3");
-define("SOC_BOX_REDIRECTURL", "https://society7sandbox.soc.northwestern.edu/get/box/code");
 
 
 /**

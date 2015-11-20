@@ -1,6 +1,8 @@
 <?php
 
-
+define('SOC_BOXAUTH_REDIRECTURI_VARIABLE', 'soc_boxauth_redirecturi');
+define('SOC_BOXAUTH_CLIENTSECRET_VARIABLE', 'soc_boxauth_clientsecret');
+define('SOC_BOXAUTH_CLIENTID_VARIABLE', 'soc_boxauth_clientid');
 define('SOC_BOXAUTH_SUCCESSMESSAGE_VARIABLE', 'soc_boxauth_successmessage');
 define('SOC_BOXAUTH_FAILUREMESSAGE_VARIABLE', 'soc_boxauth_failuremessage');
 
