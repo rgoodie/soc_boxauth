@@ -1,5 +1,6 @@
 name = Soc Boxauth
-description = TODO: Description of module
+description = A Drupal 7 module that helps with Box API Oauth. This will help get your user over to the Box.com login form,
+complete OAuth2, and store the access_token to SESSION['box']['access_token']
 core = 7.x
 
 
