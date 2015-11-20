@@ -5,6 +5,7 @@
  * TODO: Enter file description here.
  */
 
+define('SOC_BOXAUTH_MODULENAME', 'SOC BoxAuth');
 define('SOC_BOXAUTH_MODDESC', 'Record necessary information points such as client_id and client_secret');
 
 
@@ -13,10 +14,8 @@ define('SOC_BOXAUTH_CLIENTSECRET_VARIABLE', 'soc_boxauth_clientsecret');
 define('SOC_BOXAUTH_CLIENTID_VARIABLE', 'soc_boxauth_clientid');
 define('SOC_BOXAUTH_SUCCESSMESSAGE_VARIABLE', 'soc_boxauth_successmessage');
 define('SOC_BOXAUTH_FAILUREMESSAGE_VARIABLE', 'soc_boxauth_failuremessage');
-
-
-
-
+define('SOC_BOXAUTH_DEBUGSTATE_VARIABLE', 'soc_boxauth_debugstate');
+define('SOC_BOXAUTH_RENEWTIME_VARIABLE', 'soc_boxauth_renewtime');
 
 /**
  * Implements hook_menu().
@@ -45,9 +44,9 @@ function soc_boxauth_menu() {
     'title' => t('Box API2 Settings (SOC)'),
     'page callback' => 'drupal_get_form',
     'page arguments' => ['soc_boxauth_admin'],
-    'access arguments'=> array('administer boxauth'),
+    'access arguments' => array('administer boxauth'),
     'file' => 'soc_boxauth.adminform.inc',
-    'description'=> t(SOC_BOXAUTH_MODDESC)
+    'description' => t(SOC_BOXAUTH_MODDESC)
   ];
 
   return $items;
@@ -68,24 +67,129 @@ function soc_boxauth_permission() {
 
 
 /**
+ * Implements hook_init().
+ */
+/**
+ * Implements hook_page_alter().
+ */
+function soc_boxauth_page_alter(&$page) {
+
+
+  // If we have an access token, see how much time is left on it. If it's soon
+  // to expire, then we should just send renew.
+  if (isset($_SESSION['box']['access_token'])) {
+    $_SESSION['box']['countdown'] = $_SESSION['box']['expires_time'] - time();
+
+    // Do we need to renew the token? This is defined by the count down being
+    // great than 0 but less than our renewal time.
+    if ($_SESSION['box']['countdown'] < variable_get(SOC_BOXAUTH_RENEWTIME_VARIABLE)) {
+
+      // log 'two-minute' warning
+      watchdog(SOC_BOXAUTH_MODULENAME, "Access token needs to be refreshed ", $_SESSION['box']['countdown']);
+
+      // if it hasn't completly expired, do the behind-the-scenes renewal
+      if ($_SESSION['box']['countdown'] > 0) {
+        watchdog(SOC_BOXAUTH_MODULENAME, "Doing token refresh", $_SESSION['box']);
+        _soc_boxauth_do_refresh_token();
+      }
+
+      // If it is just too old, just unset() the SESSION['box']
+      else {
+        watchdog(SOC_BOXAUTH_MODULENAME, "Unsetting session['box']", $_SESSION['box']);
+        unset($_SESSION['box']);
+      }
+
+
+
+
+    }
+
+  }
+
+  // If debug mode, show some interesting stuff
+  if (variable_get(SOC_BOXAUTH_DEBUGSTATE_VARIABLE, FALSE) == TRUE) {
+   // dpm($_SESSION['box']);
+    drupal_set_message(t("Box access token dies in @min minutes", [
+      '@min' => sprintf("%.0f", $_SESSION['box']['countdown'] / 60),
+    ]));
+
+  }
+  else {
+    drupal_set_message(t('Box session information does not exist. To turn off this message turn off Debug for soc_boxauth.'));
+  }
+
+
+}
+
+/**
+ * A renew function that can be called from various hooks. It offers the
+ * refresh token to box, to regenerate the access_token and refresh token.
+ * @return bool
+ */
+
+function _soc_boxauth_do_refresh_token() {
+
+  // skip if there is no refresh token in hand
+  if (!isset($_SESSION['box']['refresh_token'])) {
+    watchdog(SOC_BOXAUTH_MODULENAME, t('No refresh token present'));
+    return FALSE;
+  }
+
+  // Build Query for a token refresh
+  $d = http_build_query([
+    'grant_type' => 'refresh_token',
+    'refresh_token' => $_SESSION['box']['refresh_token'],
+    'client_id' => variable_get(SOC_BOXAUTH_CLIENTID_VARIABLE),
+    'client_secret' => variable_get(SOC_BOXAUTH_CLIENTSECRET_VARIABLE),
+  ]);
+
+
+  // Execute POST
+  $result = json_decode(
+    file_get_contents(
+      "https://app.box.com/api/oauth2/token",
+      FALSE,
+      stream_context_create([
+        'http' => [
+          'method' => 'POST',
+          'header' => 'Content-type: application/x-www-form-urlencoded',
+          'content' => $d,
+        ]
+      ])
+    )
+  );
+
+  // If good result, store new values in SESSION
+  if (isset($result['access_token'])) {
+    $_SESSION['box'] = $result;
+  }
+
+  else {
+    watchdog(SOC_BOXAUTH_MODULENAME, 'Difficulty renewing the token');
+  }
+
+}
+
+
+/**
  * Checks to ensure a few things are inline before we get going
  */
 function _soc_boxauth_startup_helper() {
 
 
   // are variables empty?
-  if (variable_get('soc_boxauth_clientid','') == '') {
+  if (variable_get('soc_boxauth_clientid', '') == '') {
     drupal_set_message(
       t('The necessary configuration for this module is not set. Please !link. Or contact a site administrator. ', [
-        '!link'=> l('configure this setting now', 'admin/config/system/box-auth'),
+        '!link' => l('configure this setting now', 'admin/config/system/box-auth'),
       ])
     );
 
-    return false;
+    return FALSE;
   }
 
 
-  return true;
+  return TRUE;
 
 
 }

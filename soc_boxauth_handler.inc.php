@@ -1,4 +1,14 @@
 <?php
+
+
+
+define('SOC_BOXAUTH_EXPIREOFFSET', 3000);   // arbitrary number of seconds before token needs to be redone
+
+
+/**
+ * This function is handles the callback from Box API.
+ * @return string
+ */
 function _soc_boxauth_get_code_from_box_handler() {
 
   // get query string parameters
@@ -29,8 +39,10 @@ function _soc_boxauth_get_code_from_box_handler() {
     ])
   );
 
+
   // save to session. Decoded json object into php array
   $_SESSION['box'] = drupal_json_decode($result);
+  $_SESSION['box']['expires_time'] = time() + SOC_BOXAUTH_EXPIREOFFSET;
 
   // If successful, the ['box']['access_token'] will exists. Log and report
   // to user.
@@ -46,5 +58,5 @@ function _soc_boxauth_get_code_from_box_handler() {
     watchdog(__FUNCTION__, 'Failed box access_token');
   }
 
-  return 'true';
+  return l('FOr testing, go back to auth page.', 'do/box/auth');
 }
