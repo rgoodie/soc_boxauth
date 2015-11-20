@@ -58,5 +58,6 @@ function _soc_boxauth_get_code_from_box_handler() {
     watchdog(SOC_BOXAUTH_MODULENAME, 'Failed box access_token');
   }
 
-  return l('FOr testing, go back to auth page.', 'do/box/auth');
+  // can't return
+  return drupal_goto('do/box/auth');
 }

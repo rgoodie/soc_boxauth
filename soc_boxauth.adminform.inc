@@ -4,6 +4,9 @@
 
 function soc_boxauth_admin() {
 
+
+  _soc_boxauth_startup_helper();
+
   // Instructions and a link to Box Developer
   $form['soc_boxauth_header'] = [
     '#markup' => t("Information entred below should be identical to what you have in your application settings found on !Box", [

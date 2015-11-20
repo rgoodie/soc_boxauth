@@ -58,20 +58,34 @@ function soc_boxauth_menu() {
 
   // diagnositcs link
   $items['box/diagnostics/for/this/account'] = [
-    'title'=>t('Box Current Session'),
-    'page callback'=>'_soc_boxauth_diagnostics',
-    'access arguments'=>['access do boxauth'],
-    'file'=>'soc_boxauth.diagnostics.inc.php',
+    'title' => t('Box Current Session'),
+    'page callback' => '_soc_boxauth_diagnostics',
+    'access arguments' => ['access do boxauth'],
+    'file' => 'soc_boxauth.diagnostics.inc.php',
+    'type' => MENU_CALLBACK,
+  ];
+
+  // force refresh
+  $items['box/force/refresh'] = [
+    'title' => t('Box force refresh token'),
+    'page callback' => '_soc_boxauth_force_refresh_callback',
+    'access arguments' => ['access do boxauth'],
     'type' => MENU_CALLBACK,
   ];
 
 
   // shortcuts
-  $items['box/diag'] = $items['box/diagnostics/for/this/account'] ;
+  $items['box/diag'] = $items['box/diagnostics/for/this/account'];
 
   return $items;
 }
 
+
+function _soc_boxauth_force_refresh_callback() {
+  //TODO: FIND OUT WHY THIS IS BREAKING
+  _soc_boxauth_do_refresh_token();
+  return 'test';
+}
 
 /**
  * Implements hook_permission().
@@ -84,18 +98,23 @@ function soc_boxauth_permission() {
     ],
     'access do boxauth' => [
       'title' => t('Allow user to do Box Authentication'),
-      'description'=>t('Do not give this permission to an anonymous user role. '),
+      'description' => t('Do not give this permission to an anonymous user role. '),
 
     ]
   ];
 }
 
 
-
 /**
  * Implements hook_page_alter().
  */
 function soc_boxauth_page_alter(&$page) {
+
+
+  // ensure we're set up properly
+  if (user_is_logged_in()) {
+    _soc_boxauth_startup_helper();
+  }
 
   // determine if there is a need to refresh the token
   _soc_boxauth_determine_refresh_need();
@@ -124,6 +143,7 @@ function soc_boxauth_page_alter(&$page) {
 
 function _soc_boxauth_determine_refresh_need() {
 
+
   // If we have an access token, see how much time is left on it. If it's soon
   // to expire, then we should just send renew.
   if (isset ($_SESSION['box']) && isset($_SESSION['box']['access_token'])) {
@@ -131,7 +151,7 @@ function _soc_boxauth_determine_refresh_need() {
 
     // Do we need to renew the token? This is defined by the count down being
     // great than 0 but less than our renewal time.
-    if ($_SESSION['box']['countdown'] < variable_get(SOC_BOXAUTH_RENEWTIME_VARIABLE)) {
+    if ($_SESSION['box']['countdown'] < (variable_get(SOC_BOXAUTH_RENEWTIME_VARIABLE) * 60)) {
 
       // log 'two-minute' warning
       watchdog(SOC_BOXAUTH_MODULENAME, "Access token needs to be refreshed ", $_SESSION['box']['countdown']);
@@ -175,7 +195,7 @@ function _soc_boxauth_do_refresh_token() {
 
 
   // Execute POST
-  $result = json_decode(
+  $result = drupal_json_decode(
     file_get_contents(
       "https://app.box.com/api/oauth2/token",
       FALSE,
@@ -191,7 +211,8 @@ function _soc_boxauth_do_refresh_token() {
 
   // If good result, store new values in SESSION and
   // recalculate the expires time.
-  if (isset($result['access_token'])) {
+
+  if (isset($result->access_token)) {
     $_SESSION['box'] = $result;
     $_SESSION['box']['expires_time'] = time() + SOC_BOXAUTH_EXPIREOFFSET;
   }
@@ -200,6 +221,8 @@ function _soc_boxauth_do_refresh_token() {
     watchdog(SOC_BOXAUTH_MODULENAME, 'Difficulty renewing the token');
   }
 
+
+  return true;
 }
 
 
@@ -208,16 +231,24 @@ function _soc_boxauth_do_refresh_token() {
  */
 function _soc_boxauth_startup_helper() {
 
+  $variables = [
+    SOC_BOXAUTH_CLIENTID_VARIABLE,
+    SOC_BOXAUTH_RENEWTIME_VARIABLE,
+    SOC_BOXAUTH_CLIENTSECRET_VARIABLE,
+  ];
 
-  // are variables empty?
-  if (variable_get('soc_boxauth_clientid', '') == '') {
-    drupal_set_message(
-      t('The necessary configuration for this module is not set. Please !link. Or contact a site administrator. ', [
-        '!link' => l('configure this setting now', 'admin/config/system/box-auth'),
-      ])
-    );
-
-    return FALSE;
+  foreach ($variables as $var) {
+    // are variables empty?
+    if (variable_get($var, '') == '') {
+      drupal_set_message(
+        t('The necessary <b>@configuration</b> variable for this module is not set. Please !link. Or contact a site administrator. ', [
+          '@configuration' => $var,
+          '!link' => l('configure this setting now', 'admin/config/system/box-auth'),
+        ]),
+        'error',
+        FALSE
+      );
+    }
   }
 
 
