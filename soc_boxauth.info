@@ -1,0 +1,8 @@
+name = Soc Boxauth
+description = TODO: Description of module
+core = 7.x
+
+
+dependencies[] = encrypt
+
+configure = admin/config/system/box-auth

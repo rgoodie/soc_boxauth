@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * @file soc_boxauth.module
+ * TODO: Enter file description here.
+ */
+
+define('SOC_BOXAUTH_MODDESC', 'Record necessary information points such as client_id and client_secret');
+
+define('SOC_BOXAUTH_REDIRECTURI_VARIABLE', 'soc_boxauth_redirecturi');
+define('SOC_BOXAUTH_CLIENTSECRET_VARIABLE', 'soc_boxauth_clientsecret');
+define('SOC_BOXAUTH_CLIENTID_VARIABLE', 'soc_boxauth_clientid');
+
+define("SOC_BOX_CLIENTID", "ahoeb8l5nwfl5653v5nnoxrmt2ok8q9b");
+define("SOC_BOX_CLIENTSECRET", "jRY9rpQc0nq8rIsiiZ3RVpnWa590can3");
+define("SOC_BOX_REDIRECTURL", "https://society7sandbox.soc.northwestern.edu/get/box/code");
+
+
+/**
+ * Implements hook_menu().
+ */
+
+function soc_boxauth_menu() {
+  $items['do/box/auth'] = array(
+    'title' => 'Send user to Box Auth',
+    'page callback' => '_soc_boxauth_senduser_to_boxauth_content',
+    'access arguments' => array('access content'),
+    'type' => MENU_SUGGESTED_ITEM,
+    'file' => 'soc_boxauth_form.inc.php',
+  );
+
+
+  $items['get/box/code'] = [
+    'title' => 'Recieving box code',
+    'page callback' => '_soc_boxauth_get_code_from_box_handler',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'file' => 'soc_boxauth_handler.inc.php',
+  ];
+
+
+  $items['admin/config/system/box-auth'] = [
+    'title' => t('Box API2 Settings (SOC)'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['soc_boxauth_admin'],
+    'access arguments'=> array('administer boxauth'),
+    'file' => 'soc_boxauth.adminform.inc',
+    'description'=> t(SOC_BOXAUTH_MODDESC)
+  ];
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function soc_boxauth_permission() {
+  return array(
+    'administer boxauth' => array(
+      'title' => t('Administer BOX AUTH settings'),
+      'description' => t(SOC_BOXAUTH_MODDESC),
+    ),
+  );
+}
+
+
+/**
+ * Checks to ensure a few things are inline before we get going
+ */
+function _soc_boxauth_startup_helper() {
+
+
+  // are variables empty?
+  if (variable_get('soc_boxauth_clientid','') == '') {
+    drupal_set_message(
+      t('The necessary configuration for this module is not set. Please !link. Or contact a site administrator. ', [
+        '!link'=> l('configure this setting now', 'admin/config/system/box-auth'),
+      ])
+    );
+
+    return false;
+  }
+
+
+  return true;
+
+
+}
+
+
