@@ -26,32 +26,48 @@ define('SOC_BOXAUTH_RENEWTIME_VARIABLE', 'soc_boxauth_renewtime');
  */
 
 function soc_boxauth_menu() {
+
+
+  // Oauth, part 1
   $items['do/box/auth'] = array(
     'title' => 'Send user to Box Auth',
     'page callback' => '_soc_boxauth_senduser_to_boxauth_content',
-    'access arguments' => array('access content'),
+    'access arguments' => array('access do boxauth'),
     'type' => MENU_SUGGESTED_ITEM,
     'file' => 'soc_boxauth_form.inc.php',
   );
 
-
+  // Oauth, part 2
   $items['get/box/code'] = [
     'title' => 'Recieving box code',
     'page callback' => '_soc_boxauth_get_code_from_box_handler',
-    'access arguments' => array('access content'),
+    'access arguments' => ['access do boxauth'],
     'type' => MENU_CALLBACK,
     'file' => 'soc_boxauth_handler.inc.php',
   ];
 
-
+  // config link
   $items['admin/config/system/box-auth'] = [
     'title' => t('Box API2 Settings (SOC)'),
     'page callback' => 'drupal_get_form',
     'page arguments' => ['soc_boxauth_admin'],
-    'access arguments' => array('administer boxauth'),
+    'access arguments' => ['administer boxauth'],
     'file' => 'soc_boxauth.adminform.inc',
     'description' => t(SOC_BOXAUTH_MODDESC)
   ];
+
+  // diagnositcs link
+  $items['box/diagnostics/for/this/account'] = [
+    'title'=>t('Box Current Session'),
+    'page callback'=>'_soc_boxauth_diagnostics',
+    'access arguments'=>['access do boxauth'],
+    'file'=>'soc_boxauth.diagnostics.inc.php',
+    'type' => MENU_CALLBACK,
+  ];
+
+
+  // shortcuts
+  $items['box/diag'] = $items['box/diagnostics/for/this/account'] ;
 
   return $items;
 }
@@ -61,23 +77,52 @@ function soc_boxauth_menu() {
  * Implements hook_permission().
  */
 function soc_boxauth_permission() {
-  return array(
-    'administer boxauth' => array(
+  return [
+    'administer boxauth' => [
       'title' => t('Administer BOX AUTH settings'),
       'description' => t(SOC_BOXAUTH_MODDESC),
-    ),
-  );
+    ],
+    'access do boxauth' => [
+      'title' => t('Allow user to do Box Authentication'),
+      'description'=>t('Do not give this permission to an anonymous user role. '),
+
+    ]
+  ];
 }
 
 
-/**
- * Implements hook_init().
- */
+
 /**
  * Implements hook_page_alter().
  */
 function soc_boxauth_page_alter(&$page) {
 
+  // determine if there is a need to refresh the token
+  _soc_boxauth_determine_refresh_need();
+
+
+  // If debug mode, show some interesting stuff
+  if (variable_get(SOC_BOXAUTH_DEBUGSTATE_VARIABLE, FALSE) == TRUE && isset($_SESSION['box']['countdown'])) {
+    // dpm($_SESSION['box']);
+    drupal_set_message(t("Box access token dies in @min minutes", [
+      '@min' => sprintf("%.0f", $_SESSION['box']['countdown'] / 60) | 0,
+    ]));
+
+  }
+  else {
+    drupal_set_message(t('Box session information does not exist. To turn off this message turn off Debug for soc_boxauth.'));
+  }
+
+
+}
+
+
+/**
+ * A helper function that determines if the auth_token is about to expire and
+ * if it is -- with in defined parameters, then it calls _soc_boxauth_do_refresh_token
+ */
+
+function _soc_boxauth_determine_refresh_need() {
 
   // If we have an access token, see how much time is left on it. If it's soon
   // to expire, then we should just send renew.
@@ -103,22 +148,7 @@ function soc_boxauth_page_alter(&$page) {
         unset($_SESSION['box']);
       }
     }
-
   }
-
-  // If debug mode, show some interesting stuff
-  if (variable_get(SOC_BOXAUTH_DEBUGSTATE_VARIABLE, FALSE) == TRUE && isset($_SESSION['box']['countdown'] )) {
-   // dpm($_SESSION['box']);
-    drupal_set_message(t("Box access token dies in @min minutes", [
-      '@min' => sprintf("%.0f", $_SESSION['box']['countdown'] / 60) | 0,
-    ]));
-
-  }
-  else {
-    drupal_set_message(t('Box session information does not exist. To turn off this message turn off Debug for soc_boxauth.'));
-  }
-
-
 }
 
 /**
@@ -159,9 +189,11 @@ function _soc_boxauth_do_refresh_token() {
     )
   );
 
-  // If good result, store new values in SESSION
+  // If good result, store new values in SESSION and
+  // recalculate the expires time.
   if (isset($result['access_token'])) {
     $_SESSION['box'] = $result;
+    $_SESSION['box']['expires_time'] = time() + SOC_BOXAUTH_EXPIREOFFSET;
   }
 
   else {
