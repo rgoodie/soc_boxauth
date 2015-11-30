@@ -73,11 +73,40 @@ function soc_boxauth_menu() {
     'type' => MENU_CALLBACK,
   ];
 
+  // remove box auth from session
+  // force refresh
+  $items['box/stop/session'] = [
+    'title' => t('Stop Box Session'),
+    'page callback' => '_soc_boxauth_kill_session',
+    'access arguments' => ['access content'],
+    'type' => MENU_CALLBACK,
+  ];
+
+
 
   // shortcuts
   $items['box/diag'] = $items['box/diagnostics/for/this/account'];
 
   return $items;
+}
+
+/**
+ * removes box information from SESSION
+ */
+function _soc_boxauth_kill_session() {
+
+
+  if (isset($_SESSION['box'])) {
+    watchdog(SOC_BOXAUTH_MODULENAME, 'Attempting to unset box information in $_SESSION');
+    unset($_SESSION['box']);
+    return 'Box session closed';
+  }
+  else {
+    watchdog(SOC_BOXAUTH_MODULENAME, 'No box in $_SESSION. No action taken');
+    return 'No box information active. Nothing to do. ';
+  }
+
+
 }
 
 
@@ -179,6 +208,10 @@ function _soc_boxauth_determine_refresh_need() {
 
 function _soc_boxauth_do_refresh_token() {
 
+
+
+
+
   // skip if there is no refresh token in hand
   if (!isset($_SESSION['box']['refresh_token'])) {
     watchdog(SOC_BOXAUTH_MODULENAME, t('No refresh token present'));
@@ -256,5 +289,4 @@ function _soc_boxauth_startup_helper() {
 
 
 }
-
 
