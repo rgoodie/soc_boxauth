@@ -1,0 +1,7 @@
+name = Soc Boxgroup
+description = Sync user list between a Box.com folder and an organic group(s)
+dependencies[] = soc_boxauth
+dependencies[] = og
+package = soc
+core = 7.x
+files[] = tests/soc_boxgroup.test

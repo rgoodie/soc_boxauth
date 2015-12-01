@@ -1,10 +1,6 @@
 <?php
 
 
-
-
-
-
 /**
  * This function is handles the callback from Box API.
  * @return string
@@ -46,7 +42,7 @@ function _soc_boxauth_get_code_from_box_handler() {
 
   // If successful, the ['box']['access_token'] will exists. Log and report
   // to user.
-  if( isset($_SESSION['box']['access_token'])) {
+  if (isset($_SESSION['box']['access_token'])) {
     drupal_set_message(t(variable_get(SOC_BOXAUTH_SUCCESSMESSAGE_VARIABLE)));
     watchdog(SOC_BOXAUTH_MODULENAME, 'Successful box access_token');
   }
@@ -58,6 +54,7 @@ function _soc_boxauth_get_code_from_box_handler() {
     watchdog(SOC_BOXAUTH_MODULENAME, 'Failed box access_token');
   }
 
-  // can't return
-  return drupal_goto('do/box/auth');
+   return "Returned from Box";
+
+
 }

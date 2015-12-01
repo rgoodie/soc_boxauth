@@ -1,6 +1,6 @@
 <?php
 
-require_once("PHPBox/BoxFolder.php");
+//require_once(__DIR__ . "/PHPBox/BoxFolder.php");
 
 function _soc_boxauth_diagnostics() {
 

@@ -1,0 +1,178 @@
+<?php
+
+/**
+ * @file soc_boxgroup.module
+ * TODO: Enter file description here.
+ */
+
+
+define('SOC_BOXGROUP_MODULE_NAME', 'soc_boxgroup');
+define('SOC_BOXGROUP_FOLDER_FIELDNAME', 'soc_boxgroup_folder');   // The field name that holds the Box ID
+
+
+require_once(__DIR__ . '/../PHPBox/BoxFolder.class.php');
+require_once(__DIR__ . '/../PHPBox/BoxFolderOperations.class.php');
+
+
+/**
+ * Implements hook_menu().
+ */
+function soc_boxgroup_menu() {
+  $items = array();
+
+  $items['boxgroup/diag/%'] = array(
+    'title' => 'Testing a box group connection',
+    'description' => 'Configure settings for Soc Boxgroup.',
+    'page callback' => 'soc_boxgroup_test',
+    'page arguments' => [2],
+    'access arguments' => ['access do boxauth'],
+    'file' => 'soc_boxgroup.diagnostics.inc.php',
+
+  );
+
+
+  // add user to group by email
+  $items['boxgroup/add/%/%'] = [
+    'title' => 'Add user to group',
+    'description' => 'Path to add user to a group. /boxgroup/add/{gid}/{uid}',
+    'access arguments' => ['administer boxauth'],
+    'page callback' => 'soc_boxgroup_adduser',
+    'page arguments' => [2, 3]
+  ];
+
+  return $items;
+}
+
+
+/**
+ * Standalone function to both subsribe user to an OG and make the box request
+ * @param $gid
+ * @param $uid
+ */
+function soc_boxgroup_adduser($gid, $uid) {
+
+  $accesstoken = BoxFolderOperations::getCurrentAccessToken();
+
+  $gid = filter_var($gid, FILTER_SANITIZE_NUMBER_INT);
+  $uid = filter_var($uid, FILTER_SANITIZE_NUMBER_INT);
+
+  $node = node_load($gid);
+  $user = user_load($uid);
+
+
+  return 'test';
+
+
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function soc_boxgroup_permission() {
+  $permissions = array();
+
+  $permissions['administer soc_boxgroup'] = array(
+    'title' => t('TODO: enter permission title'),
+    'description' => t('TODO: enter permission description'),
+  );
+  return $permissions;
+}
+
+/**
+ * Implements hook_form_alter().
+ * Does nothing on it's own but call the  _soc_boxgroup_issessionactive()
+ * function to check for active connection.
+ */
+function soc_boxgroup_form_alter(&$form, &$form_state, $form_id) {
+
+  if (in_array($form_id, ['og_ui_delete_membership', 'og_ui_add_users'])) {
+    _soc_boxgroup_issessionactive();
+  }
+}
+
+
+/**
+ * Implements  hook_og_membership_delete
+ * @param \OgMembership $og_membership
+ */
+function soc_boxgroup_og_membership_delete(OgMembership $og_membership) {
+  watchdog(SOC_BOXGROUP_MODULE_NAME, 'soc_boxgroup_og_membership_delete ');
+  $action_object = _soc_boxgroup_ogmem_getinfo($og_membership, 'delete');
+  dpm($action_object);
+
+
+}
+
+/**
+ * Implements  hook_og_membership_presave
+ * @param \OgMembership $og_membership
+ */
+function soc_boxgroup_og_membership_presave(OgMembership $og_membership) {
+  watchdog(SOC_BOXGROUP_MODULE_NAME, 'soc_boxgroup_og_membership_presave');
+  $action_object = _soc_boxgroup_ogmem_getinfo($og_membership, 'presave');
+
+  $folder = new BoxFolder($action_object['box_folder_id'], $_SESSION['box']['access_token']);
+  dpm(json_decode($folder->addUser($action_object['mail'])));
+
+
+}
+
+
+/**
+ * Dissects the $og_membership to pull out necessary pieces of information.
+ *
+ *  id (String, 2 characters )
+ * type (String, 26 characters ) og_membership_type_default
+ * etid -- user id
+ * entity_type -- user
+ * gid (String, 1 characters ) 1
+ * group_type (String, 4 characters ) node
+ * state (String, 1 characters ) 1
+ * created (String, 10 characters ) 1448904940
+ * field_name (String, 12 characters ) og_user_node
+ * language (String, 2 characters ) en
+ * og_membership_request (Array, 0 elements)
+ * rdf_mapping (Array, 0 elements)
+ */
+function _soc_boxgroup_ogmem_getinfo(OgMembership $og_membership, $action = '') {
+
+
+  // Is session active
+  _soc_boxgroup_issessionactive();
+
+  // get the user id, should be a number
+  $userid = filter_var($og_membership->etid, FILTER_SANITIZE_NUMBER_INT);
+
+  // group id, should be a number
+  $gid = filter_var($og_membership->gid, FILTER_SANITIZE_NUMBER_INT);
+
+  // get user email
+  $u = user_load($userid);
+  $mail = $u->mail;
+
+  // get box folder id
+  $box_folder_id = BoxFolderOperations::getBoxFolderID($gid);
+
+
+  return [
+    'uid' => $userid,                     // user id
+    'gid' => $gid,                        // group nid of node
+    'mail' => $mail,                      // user email
+    'box_folder_id' => $box_folder_id,    // box folder id
+    'action' => $action,                  // delete, save, presave, edit, etc
+  ];
+
+
+}
+
+
+function _soc_boxgroup_issessionactive() {
+  if (!isset($_SESSION['box'])) {
+    $msg = t('There <b>is no session active</b> between this site and box. Please !link now. ', [
+      '!link' => l('start that session now', 'do/box/auth'),
+    ]);
+    $msg .= t('Any user added or removed from the group will not match up to the linked Box Folder. ');
+    drupal_set_message($msg, 'warning');
+  }
+}
