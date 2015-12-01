@@ -74,7 +74,6 @@ function soc_boxauth_menu() {
   ];
 
   // remove box auth from session
-  // force refresh
   $items['box/stop/session'] = [
     'title' => t('Stop Box Session'),
     'page callback' => '_soc_boxauth_kill_session',
@@ -209,53 +208,48 @@ function _soc_boxauth_determine_refresh_need() {
 function _soc_boxauth_do_refresh_token() {
 
 
-
-
-
   // skip if there is no refresh token in hand
-  if (!isset($_SESSION['box']['refresh_token'])) {
+  if (!BoxFolderOperations::getCurrentAccessToken()) {
     watchdog(SOC_BOXAUTH_MODULENAME, t('No refresh token present'));
     return FALSE;
   }
 
   // Build Query for a token refresh
-  $d = http_build_query([
+  $d = [
     'grant_type' => 'refresh_token',
     'refresh_token' => $_SESSION['box']['refresh_token'],
     'client_id' => variable_get(SOC_BOXAUTH_CLIENTID_VARIABLE),
     'client_secret' => variable_get(SOC_BOXAUTH_CLIENTSECRET_VARIABLE),
-  ]);
+  ];
 
+  dpm(http_build_query($d));
 
-  // Execute POST
-  $result = drupal_json_decode(
-    file_get_contents(
-      "https://app.box.com/api/oauth2/token",
-      FALSE,
-      stream_context_create([
-        'http' => [
-          'method' => 'POST',
-          'header' => 'Content-type: application/x-www-form-urlencoded',
-          'content' => $d,
-        ]
-      ])
-    )
-  );
+  // Get response. Decode and store as PHP array. Be sure to cast as an
+  // array to stay compatible with existing coding.
+  $result = (array) json_decode(BoxFolderOperations::doPost('https://app.box.com/api/oauth2/token',$d, BoxFolderOperations::getCurrentAccessToken(), 'QUERY'));
+
 
   // If good result, store new values in SESSION and
   // recalculate the expires time.
-
-  if (isset($result->access_token)) {
+  if (isset($result['access_token'])) {
     $_SESSION['box'] = $result;
     $_SESSION['box']['expires_time'] = time() + SOC_BOXAUTH_EXPIREOFFSET;
+    watchdog(SOC_BOXAUTH_MODULENAME, 'Box token renewed');
+    drupal_set_message('Box token was renewed');
+    return true;
   }
 
+  // If refresh failed, log and display messages. Also, kill the session scope
+  // for this.
   else {
-    watchdog(SOC_BOXAUTH_MODULENAME, 'Difficulty renewing the token');
+    watchdog(SOC_BOXAUTH_MODULENAME, 'Box token refresh failed.');
+    drupal_set_message('Box token refresh failed.', 'error');
+    unset($_SESSION['box']);
+    return false;
   }
 
 
-  return true;
+
 }
 
 
