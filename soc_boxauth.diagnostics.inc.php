@@ -1,9 +1,13 @@
 <?php
 
-//require_once(__DIR__ . "/PHPBox/BoxFolder.php");
+
 
 function _soc_boxauth_diagnostics() {
 
+
+    if (!BoxFolderOperations::isSessionActive()) {
+        return 'Box not active';
+    };
 
     $content = '<pre>';
     $content .= print_r($_SESSION['box'], true);

@@ -4,9 +4,18 @@
 
 function soc_boxgroup_test($gid) {
 
+  if (!BoxFolderOperations::isSessionActive()) {
+    return 'Box session not active';
+  };
+
   $box_id = BoxFolderOperations::getBoxFolderID($gid);
 
+  if (!$box_id)
+
   $folder = new BoxFolder($box_id, BoxFolderOperations::getCurrentAccessToken());
+
+
+
 
   $to_return[] = 'TESTING:';
   $to_return[] = $box_id;

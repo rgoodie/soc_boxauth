@@ -222,7 +222,7 @@ function _soc_boxauth_do_refresh_token() {
     'client_secret' => variable_get(SOC_BOXAUTH_CLIENTSECRET_VARIABLE),
   ];
 
-  dpm(http_build_query($d));
+  //dpm(http_build_query($d));
 
   // Get response. Decode and store as PHP array. Be sure to cast as an
   // array to stay compatible with existing coding.

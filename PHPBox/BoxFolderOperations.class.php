@@ -12,6 +12,7 @@
  * @author richard
  */
 class BoxFolderOperations {
+  const BOX_OPERATIONS_NAME = 'Box Operations';
 
 
   /**
@@ -27,6 +28,25 @@ class BoxFolderOperations {
   }
 
 
+  public static function isSessionActive() {
+    if (!isset($_SESSION['box'])) {
+      $msg = t('There <b>is no session active</b> between this site and box. Please !link now. ', [
+        '!link' => l('start that session now', 'do/box/auth'),
+      ]);
+      $msg .= t('Any user added or removed from the group will not match up to the linked Box Folder. ');
+      drupal_set_message($msg, 'warning');
+      watchdog(self::BOX_OPERATIONS_NAME, 'Box session not active');
+      return false;
+    }
+
+
+
+    else {
+      return true;
+    }
+  }
+
+
   public static function getCurrentAccessToken() {
 
     // If we have an access token session in memeory return it.
@@ -35,14 +55,14 @@ class BoxFolderOperations {
         return $_SESSION['box']['access_token'];
       }
       else {
-        dpm($_SESSION);
+        //dpm($_SESSION);
         return false;
       }
     }
 
 
     else {
-      watchdog('Box Operations', 'Session not started');
+      watchdog(self::BOX_OPERATIONS_NAME, 'Session not started');
       drupal_set_message('Box session not active', 'error');
       return FALSE;
 
@@ -58,7 +78,7 @@ class BoxFolderOperations {
 
 
     // Is session active
-    _soc_boxgroup_issessionactive();
+    self::isSessionActive();
 
     $node = node_load($gid);
 
@@ -69,7 +89,7 @@ class BoxFolderOperations {
       $msg = t('@node_title is not an Group', [
         '@node_title' => $node->title,
       ]);
-      watchdog(SOC_BOXGROUP_MODULE_NAME, $msg);
+      watchdog(self::BOX_OPERATIONS_NAME, $msg);
       drupal_set_message($msg, 'error');
       return FALSE;
     }
@@ -117,7 +137,7 @@ class BoxFolderOperations {
         '@file' => __FILE__,
         '!list' => implode(', ', $encode_types),
       ]);
-      watchdog('Box Operations', $msg);
+      watchdog(self::BOX_OPERATIONS_NAME, $msg);
       drupal_set_message($msg, 'error');
 
       return FALSE;

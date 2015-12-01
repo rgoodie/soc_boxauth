@@ -31,39 +31,11 @@ function soc_boxgroup_menu() {
   );
 
 
-  // add user to group by email
-  $items['boxgroup/add/%/%'] = [
-    'title' => 'Add user to group',
-    'description' => 'Path to add user to a group. /boxgroup/add/{gid}/{uid}',
-    'access arguments' => ['administer boxauth'],
-    'page callback' => 'soc_boxgroup_adduser',
-    'page arguments' => [2, 3]
-  ];
 
   return $items;
 }
 
 
-/**
- * Standalone function to both subsribe user to an OG and make the box request
- * @param $gid
- * @param $uid
- */
-function soc_boxgroup_adduser($gid, $uid) {
-
-  $accesstoken = BoxFolderOperations::getCurrentAccessToken();
-
-  $gid = filter_var($gid, FILTER_SANITIZE_NUMBER_INT);
-  $uid = filter_var($uid, FILTER_SANITIZE_NUMBER_INT);
-
-  $node = node_load($gid);
-  $user = user_load($uid);
-
-
-  return 'test';
-
-
-}
 
 
 /**
@@ -87,7 +59,7 @@ function soc_boxgroup_permission() {
 function soc_boxgroup_form_alter(&$form, &$form_state, $form_id) {
 
   if (in_array($form_id, ['og_ui_delete_membership', 'og_ui_add_users'])) {
-    _soc_boxgroup_issessionactive();
+    BoxFolderOperations::isSessionActive();
   }
 }
 
@@ -99,8 +71,10 @@ function soc_boxgroup_form_alter(&$form, &$form_state, $form_id) {
 function soc_boxgroup_og_membership_delete(OgMembership $og_membership) {
   watchdog(SOC_BOXGROUP_MODULE_NAME, 'soc_boxgroup_og_membership_delete ');
   $action_object = _soc_boxgroup_ogmem_getinfo($og_membership, 'delete');
-  dpm($action_object);
-
+  //dpm($action_object);
+  $folder = new BoxFolder($action_object['box_folder_id'], $_SESSION['box']['access_token']);
+  $result = json_decode($folder->removeUserByEmail($action_object['mail']));
+  dpm($result);
 
 }
 
@@ -113,7 +87,29 @@ function soc_boxgroup_og_membership_presave(OgMembership $og_membership) {
   $action_object = _soc_boxgroup_ogmem_getinfo($og_membership, 'presave');
 
   $folder = new BoxFolder($action_object['box_folder_id'], $_SESSION['box']['access_token']);
-  dpm(json_decode($folder->addUser($action_object['mail'])));
+  $result = json_decode($folder->addUser($action_object['mail']));
+
+  // SUCCESS: Report on outcome.
+  // dpm($result);
+  if ($result->type == 'collaboration') {
+    $msg = t('Request successful. @user has access to @folder with a role of @role ', [
+      '@user' => $result->accessible_by->name,
+      '@folder' => $result->item->name,
+      '@role' => $result->role,
+    ]);
+    drupal_set_message($msg);
+    watchdog(SOC_BOXGROUP_MODULE_NAME, $msg);
+  }
+
+  else {
+    $msg = t('Request unsuccessful. You may have to manually add @user to @folder', [
+      '@user' => $result->accessible_by->name,
+      '@folder' => $result->item->name,
+    ]);
+    drupal_set_message($msg, 'error');
+    watchdog(SOC_BOXGROUP_MODULE_NAME, $msg);
+  }
+
 
 
 }
@@ -139,7 +135,7 @@ function _soc_boxgroup_ogmem_getinfo(OgMembership $og_membership, $action = '') 
 
 
   // Is session active
-  _soc_boxgroup_issessionactive();
+  BoxFolderOperations::isSessionActive();
 
   // get the user id, should be a number
   $userid = filter_var($og_membership->etid, FILTER_SANITIZE_NUMBER_INT);
@@ -166,13 +162,3 @@ function _soc_boxgroup_ogmem_getinfo(OgMembership $og_membership, $action = '') 
 
 }
 
-
-function _soc_boxgroup_issessionactive() {
-  if (!isset($_SESSION['box'])) {
-    $msg = t('There <b>is no session active</b> between this site and box. Please !link now. ', [
-      '!link' => l('start that session now', 'do/box/auth'),
-    ]);
-    $msg .= t('Any user added or removed from the group will not match up to the linked Box Folder. ');
-    drupal_set_message($msg, 'warning');
-  }
-}

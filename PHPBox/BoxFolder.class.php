@@ -9,6 +9,8 @@ class BoxFolder {
     $box_api_collab_url, // URL For collaboration operations
     $folder_contents;         // an object from the folder call
 
+  const BOX_FOLDER_CLASS_NAME = 'BoxFolder Class';
+
   public function __construct($folderid, $auth_token) {
 
     $this->auth_token = $auth_token;
@@ -128,31 +130,42 @@ class BoxFolder {
     return BoxFolderOperations::doPost($url, $postdata, $header);
   }
 
-  public function removeUser($collab_id) {
+  public function removeUserByEmail($email) {
+    $email = filter_var($email, FILTER_SANITIZE_EMAIL);
+    $people = $this->getCollabortiorNames();
 
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-      CURLOPT_URL => $this->box_api_collab_url . '/' . $collab_id,
-      CURLOPT_RETURNTRANSFER => TRUE,
-      CURLOPT_CUSTOMREQUEST => 'DELETE',
-      CURLOPT_HTTPHEADER => [$this->header_forauth]
-    ]);
+    foreach ($people as $person) {
+      if ($person['mail'] == $email) {
+        // dpm($person);
+        $msg = t("Attempting to remove @mail from @folder via collaboration id @collabid", [
+          '@mail'=>$person['mail'],
+          '@folder'=>$this->getFolderName(),
+          '@collabid'=>$person['collabid'],
+        ]);
+        watchdog(self::BOX_FOLDER_CLASS_NAME, $msg);
+        drupal_set_message($msg);
+        $result =  $this->removeUser($person['collabid']);
+        return $result;
+      }
+    }
 
-    $result = curl_exec($ch);
-    curl_close($ch);
+    return false;
 
-    return $result;
 
   }
 
-  public function getCollaboratorByEmail($email) {
-
+  public function getCollabortiorNames() {
+    $collaborators = [];
     $result = json_decode($this->getCollaborations());
     foreach ($result->entries as $entry) {
-      if ($entry->accessible_by->login == $email) {
-        return $entry->id;
-      }
+      $collaborators[] = [
+        'name' => $entry->accessible_by->name,
+        'mail' => $entry->accessible_by->login,
+        'collabid' => $entry->id,
+      ];
     }
+
+    return $collaborators;
   }
 
   public function getCollaborations() {
@@ -172,19 +185,33 @@ class BoxFolder {
     return BoxFolderOperations::doGet($url, $header);
   }
 
+  public function removeUser($collab_id) {
 
-  public function getCollabortiorNames() {
-    $collaborators = [];
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+      CURLOPT_URL => $this->box_api_collab_url . '/' . $collab_id,
+      CURLOPT_RETURNTRANSFER => TRUE,
+      CURLOPT_CUSTOMREQUEST => 'DELETE',
+      CURLOPT_HTTPHEADER => [$this->header_forauth]
+    ]);
+
+    $result = curl_exec($ch);
+    curl_close($ch);
+
+    return $result;
+
+  }
+
+  public function getCollaboratorByEmail($email) {
+
+    $email = filter_var($email, FILTER_SANITIZE_EMAIL);
+
     $result = json_decode($this->getCollaborations());
     foreach ($result->entries as $entry) {
-      $collaborators[] = [
-        'name' => $entry->accessible_by->name,
-        'mail' => $entry->accessible_by->login,
-        'collabid' => $entry->id,
-      ];
+      if ($entry->accessible_by->login == $email) {
+        return $entry->id;
+      }
     }
-
-    return $collaborators;
   }
 
 
