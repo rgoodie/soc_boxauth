@@ -1,1 +1,3 @@
-.ini
+*.ini
+*.db
+*.yml
