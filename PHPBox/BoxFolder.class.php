@@ -116,25 +116,16 @@ class BoxFolder {
     return $this->doPost($this->box_api_collab_url, $d, $this->header_forauth);
 
   }
-  // TODO: move to operations
+
+  /**
+   * Calls doPost function from the static operations helper file
+   * @param $url
+   * @param $postdata
+   * @param $header
+   * @return mixed
+   */
   public function doPost($url, $postdata, $header) {
-    // cURL magic
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postdata));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-      $header,
-    ));
-
-    //execute post
-    $result = curl_exec($ch);
-
-    //close connection
-    curl_close($ch);
-
-    return $result;
+    return BoxFolderOperations::doPost($url, $postdata, $header);
   }
 
   public function removeUser($collab_id) {
@@ -171,40 +162,30 @@ class BoxFolder {
 
   }
 
+  /**
+   * Calls doGet function from the static operations helper file
+   * @param $url
+   * @param $header
+   * @return mixed
+   */
+  public function doGet($url, $header) {
+    return BoxFolderOperations::doGet($url, $header);
+  }
+
+
   public function getCollabortiorNames() {
     $collaborators = [];
     $result = json_decode($this->getCollaborations());
     foreach ($result->entries as $entry) {
       $collaborators[] = [
-        'name'=> $entry->accessible_by->name,
+        'name' => $entry->accessible_by->name,
         'mail' => $entry->accessible_by->login,
         'collabid' => $entry->id,
-        ];
+      ];
     }
 
     return $collaborators;
   }
 
-
-
-  // TODO: move to operations
-  public function doGet($url, $header) {
-    // cURL magic
-    $ch = curl_init();
-
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-      $header,
-    ));
-
-    //execute post
-    $result = curl_exec($ch);
-
-    //close connection
-    curl_close($ch);
-
-    return $result;
-  }
 
 }
