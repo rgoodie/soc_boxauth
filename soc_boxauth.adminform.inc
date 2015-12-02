@@ -1,7 +1,6 @@
 <?php
 
 
-
 function soc_boxauth_admin() {
 
 
@@ -81,6 +80,21 @@ function soc_boxauth_admin() {
     '#collapsed' => FALSE,
   ];
 
+  // pull in rich text value of varialbe
+  $next_steps = variable_get(SOC_BOXAUTH_NEXTSTEPS_VARIABLE, [
+    'value' => 'Next steps...',
+    'format' => NULL
+  ]);
+
+  $form['text'][SOC_BOXAUTH_NEXTSTEPS_VARIABLE] = [
+    '#type' => 'text_format',
+    '#title' => t('Next steps message'),
+    '#description' => t('This message will appear on the page view immediately following the user granting access to Box.com'),
+    '#default_value' => $next_steps['value'],
+    '#format' => $next_steps['format'],
+    '#element_validate' => ['_soc_boxauth_maxlength255_validate'],
+  ];
+
   // Box Success Message
   $form['text'][SOC_BOXAUTH_SUCCESSMESSAGE_VARIABLE] = [
     '#title' => t('Success Message'),
@@ -88,9 +102,9 @@ function soc_boxauth_admin() {
     '#type' => 'textarea',
   ];
 
-  // Box Success Message
+  // Box Fail Message
   $form['text'][SOC_BOXAUTH_FAILUREMESSAGE_VARIABLE] = [
-    '#title' => t('Success Message'),
+    '#title' => t('Failure Message'),
     '#default_value' => variable_get(SOC_BOXAUTH_FAILUREMESSAGE_VARIABLE, t('Box login seems to have failed. ')),
     '#type' => 'textarea',
   ];
@@ -98,4 +112,14 @@ function soc_boxauth_admin() {
 
   return system_settings_form($form);
 
+}
+
+
+function _soc_boxauth_maxlength255_validate($element, &$form_state) {
+  if (isset($element['#value'])) {
+    if (strlen($element['#value']) > 235) {
+      dpm($element);
+      form_error($element, t('The @name field cannot exceed 235 characters', ['@name' => t($element['#title'])]));
+    }
+  }
 }

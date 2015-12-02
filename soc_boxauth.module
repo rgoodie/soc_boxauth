@@ -20,6 +20,7 @@ define('SOC_BOXAUTH_SUCCESSMESSAGE_VARIABLE', 'soc_boxauth_successmessage');
 define('SOC_BOXAUTH_FAILUREMESSAGE_VARIABLE', 'soc_boxauth_failuremessage');
 define('SOC_BOXAUTH_DEBUGSTATE_VARIABLE', 'soc_boxauth_debugstate');
 define('SOC_BOXAUTH_RENEWTIME_VARIABLE', 'soc_boxauth_renewtime');
+define('SOC_BOXAUTH_NEXTSTEPS_VARIABLE', 'soc_boxauth_nextsteps');
 
 /**
  * Implements hook_menu().

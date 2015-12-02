@@ -1,6 +1,22 @@
 <?php
 
-/*
+/**
+ * BoxFolderOperations.class.PHP
+ * Copyright (C) 2015  rg_chi via SoC
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
@@ -27,26 +43,6 @@ class BoxFolderOperations {
     return parse_ini_file('options.ini');
   }
 
-
-  public static function isSessionActive() {
-    if (!isset($_SESSION['box'])) {
-      $msg = t('There <b>is no session active</b> between this site and box. Please !link now. ', [
-        '!link' => l('start that session now', 'do/box/auth'),
-      ]);
-      $msg .= t('Any user added or removed from the group will not match up to the linked Box Folder. ');
-      drupal_set_message($msg, 'warning');
-      watchdog(self::BOX_OPERATIONS_NAME, 'Box session not active');
-      return false;
-    }
-
-
-
-    else {
-      return true;
-    }
-  }
-
-
   public static function getCurrentAccessToken() {
 
     // If we have an access token session in memeory return it.
@@ -56,7 +52,7 @@ class BoxFolderOperations {
       }
       else {
         //dpm($_SESSION);
-        return false;
+        return FALSE;
       }
     }
 
@@ -68,7 +64,6 @@ class BoxFolderOperations {
 
     }
   }
-
 
   /**
    * Helper function to get the Box id number from the node. Includes
@@ -124,8 +119,24 @@ class BoxFolderOperations {
 
   }
 
+  public static function isSessionActive() {
+    if (!isset($_SESSION['box'])) {
+      $msg = t('There <b>is no session active</b> between this site and box. Please !link now. ', [
+        '!link' => l('start that session now', 'do/box/auth'),
+      ]);
+      $msg .= t('Any user added or removed from the group will not match up to the linked Box Folder. ');
+      drupal_set_message($msg, 'warning');
+      watchdog(self::BOX_OPERATIONS_NAME, 'Box session not active');
+      return FALSE;
+    }
 
-  public static function doPost($url, $postdata, $header, $dataencode = 'JSON') {
+
+    else {
+      return TRUE;
+    }
+  }
+
+  public static function doPost($url, $postdata, $header = '', $dataencode = 'JSON') {
 
 
     // Catch bad encoding by issuing an error. The array $encode_type will
@@ -164,9 +175,13 @@ class BoxFolderOperations {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-      $header,
-    ));
+
+    // Skip header if blank
+    if ($header != '') {
+      curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        $header,
+      ));
+    }
 
     //execute post
     $result = curl_exec($ch);
