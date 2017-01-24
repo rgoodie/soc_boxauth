@@ -1,8 +1,7 @@
 Soc Boxauth
 ===========
 
-A Drupal 7 module that helps with Box API Oauth. This will help get your user over to the Box.com login form,
-complete OAuth2, and store the access_token to $_SESSION['box']['access_token']
+A Drupal 7 module that helps with [Box.com](https://box.com) API Oauth. This will help get your user over to the Box.com login form, complete OAuth2, and store the access_token to `$_SESSION['box']['access_token']`
 
 
 # To use
