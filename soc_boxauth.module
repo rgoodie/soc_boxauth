@@ -5,6 +5,15 @@
  * TODO: Enter file description here.
  */
 
+include_once 'PHPBox/BoxFolderOperations.class.php';
+include_once 'PHPBox/BoxFolder.class.php';
+
+/* force error messages */
+if (variable_get(SOC_BOXAUTH_DEBUGSTATE_VARIABLE, FALSE)) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+}
 
 // Module name used in watchdog
 define('SOC_BOXAUTH_MODULENAME', 'SOC BoxAuth');

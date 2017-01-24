@@ -65,7 +65,7 @@ function soc_boxauth_admin() {
 
   // Debug option
   $form['tech'] [SOC_BOXAUTH_DEBUGSTATE_VARIABLE] = [
-    '#title' => t('Show auth token in dpm() if exists'),
+    '#title' => t('Show auth token in dpm() if exists. Will also force PHP to show all errors'),
     '#type' => 'checkbox',
     '#default_value' => variable_get(SOC_BOXAUTH_DEBUGSTATE_VARIABLE, FALSE),
   ];
