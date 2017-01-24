@@ -30,3 +30,8 @@ Breaks the session. Invalidates the access token.
 
 # Disclaimer 
 This is as-is code. I'm doing my best, but I wouldn't use this on production servers just yet. I welcome pull requests, suggestions, patches, issues through github. I'm building this as part of a larger project at work. I'll push code as I have the chance to work on this project. But, we warned, it's not as polished as it could be. **Use at your own risk.**
+
+# Request for help, I could use
+- a code review 
+- help to useful write test
+- port to BackdropCMS
