@@ -22,7 +22,7 @@ After you have completed the `/do/box/auth`, approve the connection via OAuth2, 
 `/box/diagnostics/for/this/account`
 With the devel module enabled, it will do a data dump of what Box.com reports back. 
 
-`box/force/refresh` 
+`/box/force/refresh` 
 Refreshes your access token from box. 
 
 `/box/stop/session`
