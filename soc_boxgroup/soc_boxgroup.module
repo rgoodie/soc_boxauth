@@ -28,7 +28,15 @@ function soc_boxgroup_menu() {
     'access arguments' => ['access do boxauth'],
     'file' => 'soc_boxgroup.diagnostics.inc.php',
 
-  );
+    );
+
+  $items['boxgroup/force/uninstall'] = array(
+    'title' => t('Force Uninstall'),
+    'description'=>t('Forces uninstall hook to fire'),
+    'page callback'=> '_soc_boxgroup_manual_reset',
+    'access arguments'=> array('reset soc_boxgroup'),
+    'file'=>'soc_boxgroup.install'
+    );
 
 
 
@@ -42,13 +50,17 @@ function soc_boxgroup_menu() {
  * Implements hook_permission().
  */
 function soc_boxgroup_permission() {
-  $permissions = array();
 
-  $permissions['administer soc_boxgroup'] = array(
-    'title' => t('TODO: enter permission title'),
-    'description' => t('TODO: enter permission description'),
-  );
-  return $permissions;
+  return array(
+    'administer soc_boxgroup' => array(
+      'title' => t('Administer Box Group'),
+      'description' => t('See diagnostics and more. ')
+      ),
+    'reset soc_boxgroup' => array(
+      'title'=>t('Rest Box Group'),
+      'description'=>t('Equiv to uninstalling.')
+      )
+    );
 }
 
 /**
@@ -96,7 +108,7 @@ function soc_boxgroup_og_membership_presave(OgMembership $og_membership) {
       '@user' => $result->accessible_by->name,
       '@folder' => $result->item->name,
       '@role' => $result->role,
-    ]);
+      ]);
     drupal_set_message($msg);
     watchdog(SOC_BOXGROUP_MODULE_NAME, $msg);
   }
@@ -105,7 +117,7 @@ function soc_boxgroup_og_membership_presave(OgMembership $og_membership) {
     $msg = t('Request unsuccessful. You may have to manually add @user to @folder', [
       '@user' => $result->accessible_by->name,
       '@folder' => $result->item->name,
-    ]);
+      ]);
     drupal_set_message($msg, 'error');
     watchdog(SOC_BOXGROUP_MODULE_NAME, $msg);
   }
@@ -157,8 +169,13 @@ function _soc_boxgroup_ogmem_getinfo(OgMembership $og_membership, $action = '') 
     'mail' => $mail,                      // user email
     'box_folder_id' => $box_folder_id,    // box folder id
     'action' => $action,                  // delete, save, presave, edit, etc
-  ];
+    ];
 
 
+  }
+
+
+
+function soc_boxgroup_test_output() {
+  return 'test';
 }
-

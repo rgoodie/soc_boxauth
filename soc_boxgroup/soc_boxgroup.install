@@ -19,6 +19,8 @@ function soc_boxgroup_enable() {
   );
   field_create_field($field);
 
+  print_r($field);
+
 
 
 
@@ -67,4 +69,11 @@ function soc_boxgroup_uninstall() {
   // delete the field
   watchdog(SOC_BOXGROUP_MODULE_NAME, 'Removing field ' . SOC_BOXGROUP_FOLDER_FIELDNAME .' due to uninstalling module');
   field_delete_field(SOC_BOXGROUP_FOLDER_FIELDNAME);
+
+}
+
+
+function _soc_boxgroup_manual_reset() {
+  soc_boxgroup_uninstall();
+  return 'Function called';
 }
