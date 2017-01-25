@@ -14,15 +14,16 @@ function soc_boxgroup_test($gid) {
 
   $folder = new BoxFolder($box_id, BoxFolderOperations::getCurrentAccessToken());
 
-
+  dpm(BoxFolderOperations::getCurrentAccessToken());
 
 
   $to_return[] = 'TESTING:';
   $to_return[] = $box_id;
+  $to_return[] = $folder->getFolerName();
   //$to_return[] = '<pre>' . print_r(json_decode($folder->getCollaborations()), TRUE) . '</pre>';
 
 
-  $to_return[] = '<h2>Collaborators Object</h2><pre>' . print_r($folder->getCollabortiorNames(), TRUE) . '</pre>';
+ // $to_return[] = '<h2>Collaborators Object</h2><pre>' . print_r($folder->getCollabortiorNames(), TRUE) . '</pre>';
 
 
   return '<p>' . implode('</p><p>', $to_return) . '</p>';

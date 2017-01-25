@@ -48,7 +48,7 @@ function soc_boxauth_menu() {
     'page callback' => '_soc_boxauth_senduser_to_boxauth_content',
     'access arguments' => array('access do boxauth'),
     'type' => MENU_SUGGESTED_ITEM,
-    'file' => 'soc_boxauth_form.inc.php',
+    'file' => 'soc_boxauth_form.inc',
   );
 
   // Oauth, part 2
@@ -57,7 +57,7 @@ function soc_boxauth_menu() {
     'page callback' => '_soc_boxauth_get_code_from_box_handler',
     'access arguments' => ['access do boxauth'],
     'type' => MENU_CALLBACK,
-    'file' => 'soc_boxauth_handler.inc.php',
+    'file' => 'soc_boxauth_handler.inc',
   ];
 
   // config link
@@ -75,7 +75,7 @@ function soc_boxauth_menu() {
     'title' => t('Box Current Session'),
     'page callback' => '_soc_boxauth_diagnostics',
     'access arguments' => ['access do boxauth'],
-    'file' => 'soc_boxauth.diagnostics.inc.php',
+    'file' => 'soc_boxauth.diagnostics.inc',
     'type' => MENU_CALLBACK,
   ];
 
