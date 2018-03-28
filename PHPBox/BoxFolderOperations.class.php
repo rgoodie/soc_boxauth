@@ -25,7 +25,7 @@
 /**
  * Description of BoxFolderOperations
  *
- * @author richard
+ * @author 
  */
 class BoxFolderOperations {
   const BOX_OPERATIONS_NAME = 'Box Operations';
